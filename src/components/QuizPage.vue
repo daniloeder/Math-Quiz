@@ -25,7 +25,8 @@ export default {
       timerInterval: null,
       timeoutId: null,
       userName: '',
-      lives: 3
+      lives: 3,
+      submitting: false
     };
   },
   created() {
@@ -68,6 +69,9 @@ export default {
       this.startTimer();
     },
     submitAnswer() {
+      if (this.submitting) return; // prevent multiple rapid submits
+      this.submitting = true;
+
       if (this.timeoutId) {
         clearTimeout(this.timeoutId);
       }
@@ -83,10 +87,10 @@ export default {
       }
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
-        if (this.questionNumber < 10 && this.lives > 0) {
-          this.questionNumber++;
-        }
+        this.questionNumber++;
         this.generateNewQuestion();
+
+        this.submitting = false;
       }, 2000);
     }
   }
