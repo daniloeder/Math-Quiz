@@ -49,14 +49,15 @@ export default {
       }, 1000);
     },
     generateNewQuestion() {
-      if (this.lives <= 0 || this.questionNumber > 10) {
-        // Redirect to Quiz Summary
+      if (this.questionNumber > 10 || this.lives <= 0) {
+        // Redirecting to the QuizSummary page with necessary data
         this.$router.push({
           path: '/quiz-summary',
           query: {
             userName: this.userName,
-            score: this.$store.state.score, // Assuming the store state has a score field
-            totalQuestions: 10
+            correctAnswers: this.$store.state.score.toString(),
+            totalQuestions: (this.questionNumber - 1).toString(),
+            score: this.$store.state.score.toString()
           }
         });
         return;
@@ -82,7 +83,9 @@ export default {
       }
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
-        this.questionNumber++;
+        if (this.questionNumber < 10 && this.lives > 0) {
+          this.questionNumber++;
+        }
         this.generateNewQuestion();
       }, 2000);
     }
