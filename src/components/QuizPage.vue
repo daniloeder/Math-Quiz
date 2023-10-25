@@ -1,7 +1,9 @@
 <template>
   <div>
+    <h2>Welcome, {{ userName }}!</h2>
     <h2>Question {{ questionNumber }} of 10: {{ question.text }}</h2>
     <div v-if="timeLeft > 0">Time left: {{ timeLeft }}s</div>
+    <div>Lives: {{ lives }}</div>
     <input v-model="answer" @keyup.enter="submitAnswer" type="number" />
     <button @click="submitAnswer">Submit</button>
     <div v-if="feedback">{{ feedback }}</div>
@@ -21,10 +23,13 @@ export default {
       questionNumber: 1,
       timeLeft: 10,
       timerInterval: null,
-      timeoutId: null
+      timeoutId: null,
+      userName: '',
+      lives: 3
     };
   },
   created() {
+    this.userName = this.$route.query.userName || "Anonymous";
     this.startTimer();
     this.generateNewQuestion();
   },
@@ -33,9 +38,7 @@ export default {
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
       }
-
       this.timeLeft = 10;
-
       this.timerInterval = setInterval(() => {
         if (this.timeLeft > 0) {
           this.timeLeft--;
@@ -46,14 +49,18 @@ export default {
       }, 1000);
     },
     generateNewQuestion() {
-      if (this.questionNumber > 10) {
-        this.feedback = "Quiz completed!";
-        if (this.timerInterval) {
-          clearInterval(this.timerInterval);
-        }
+      if (this.lives <= 0 || this.questionNumber > 10) {
+        // Redirect to Quiz Summary
+        this.$router.push({
+          path: '/quiz-summary',
+          query: {
+            userName: this.userName,
+            score: this.$store.state.score, // Assuming the store state has a score field
+            totalQuestions: 10
+          }
+        });
         return;
       }
-
       const difficulty = this.$route.query.difficulty || 'easy';
       this.question = generateQuestion(difficulty);
       this.answer = "";
@@ -63,14 +70,16 @@ export default {
       if (this.timeoutId) {
         clearTimeout(this.timeoutId);
       }
-
       if (parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2)) {
         this.feedback = "Correct!";
         this.$store.commit('incrementScore');
       } else {
         this.feedback = "Incorrect.";
+        this.lives--;
+        if (this.lives <= 0) {
+          this.feedback += " You've run out of lives!";
+        }
       }
-
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
         this.questionNumber++;
