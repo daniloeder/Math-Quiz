@@ -2,7 +2,6 @@
   <div>
     <h1>Welcome to Math Quiz!</h1>
     <input v-model="userName" placeholder="Enter your name" />
-    <!-- Added a dropdown to select difficulty -->
     <select v-model="difficulty">
       <option value="easy">Easy</option>
       <option value="medium">Medium</option>

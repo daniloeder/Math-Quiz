@@ -73,7 +73,6 @@ export default {
     },
     submitAnswer() {
       if (this.submitting) return; // Prevent multiple rapid submits
-
       this.submitting = true;
 
       if (this.timeoutId) {
@@ -93,7 +92,10 @@ export default {
         }
       }
 
+      // Check if the quiz has ended here
       if (this.questionNumber > 10 || this.lives <= 0) {
+        // Correctly pass both userName and correctAnswers to the mutation
+        this.$store.commit('addHighScore', { userName: this.userName, score: this.correctAnswers });
         // Redirect to QuizSummary when the quiz ends
         this.$router.push({
           path: '/quiz-summary',
@@ -106,7 +108,6 @@ export default {
         });
         return;
       }
-
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
         this.questionNumber++;

@@ -3,8 +3,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomePage from '../components/HomePage.vue';
 import QuizPage from '../components/QuizPage.vue';
-import ScoresPage from '../components/ScoresPage.vue';
 import QuizSummary from '../components/QuizSummary.vue';
+import HighScores from '../components/HighScores.vue';
 
 const routes = [
     {
@@ -18,11 +18,6 @@ const routes = [
         component: QuizPage
     },
     {
-        path: '/scores',
-        name: 'Scores',
-        component: ScoresPage
-    },
-    {
         path: '/quiz-summary',
         name: 'QuizSummary',
         component: QuizSummary,
@@ -32,7 +27,12 @@ const routes = [
             totalQuestions: parseInt(route.query.totalQuestions, 10),
             score: parseInt(route.query.score, 10)
         })
-    }
+    },
+    {
+        path: '/scores',
+        name: 'Scores',
+        component: HighScores 
+    },
 ];
 
 const router = createRouter({
