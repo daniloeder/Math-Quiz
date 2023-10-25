@@ -5,10 +5,10 @@ export default function generateQuestion(difficulty) {
     medium: 50,
     hard: 100
   };
-  
+
   let num1 = Math.floor(Math.random() * maxValues[difficulty]);
   let num2 = Math.floor(Math.random() * maxValues[difficulty]);
-  
+
   const operation = operations[Math.floor(Math.random() * operations.length)];
 
   let text, answer;
@@ -30,9 +30,9 @@ export default function generateQuestion(difficulty) {
       answer = num1 * num2;
       break;
     case '/':
-      num2 = num2 || 1;  // Avoid division by zero
+      num2 = num2 || 1; // Avoid division by zero
       text = `What is ${num1} / ${num2}?`;
-      answer = Math.round(num1 / num2);
+      answer = num1 / num2;
       break;
   }
 

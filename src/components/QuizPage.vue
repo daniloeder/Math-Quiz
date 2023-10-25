@@ -19,13 +19,13 @@ export default {
     return {
       question: {},
       answer: null,
-      feedback: "",
+      feedback: '',
       questionNumber: 1,
       totalQuestions: 0, // Initialize totalQuestions
       timeLeft: 10,
       timerInterval: null,
       timeoutId: null,
-      userName: "",
+      userName: '',
       lives: 3,
       submitting: false
     };
@@ -54,17 +54,17 @@ export default {
       if (this.questionNumber > 10 || this.lives <= 0) {
         // Redirecting to the QuizSummary page with necessary data
         this.$router.push({
-          path: "/quiz-summary",
+          path: '/quiz-summary',
           query: {
             userName: this.userName,
             correctAnswers: this.$store.state.score.toString(),
             totalQuestions: this.totalQuestions.toString(), // Updated here
-            score: this.$store.state.score.toString(),
-          },
+            score: this.$store.state.score.toString()
+          }
         });
         return;
       }
-      const difficulty = this.$route.query.difficulty || "easy";
+      const difficulty = this.$route.query.difficulty || 'easy';
       this.question = generateQuestion(difficulty);
       this.answer = "";
       this.startTimer();
@@ -79,13 +79,15 @@ export default {
         clearTimeout(this.timeoutId);
       }
 
-      const isCorrect =
-        parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2);
+      const userAnswer = parseFloat(this.answer);
+      const correctAnswer = this.question.answer;
+
+      // Check if the user's answer is within a tolerance of 0.01 of the correct answer
+      const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.01;
 
       if (isCorrect) {
         this.feedback = "Correct!";
-        this.$store.commit("incrementScore");
-        this.questionNumber++; // Increment question number only when correct
+        this.$store.commit('incrementScore');
       } else {
         this.feedback = "Incorrect.";
         this.lives--;
@@ -97,35 +99,24 @@ export default {
       if (this.questionNumber > 10 || this.lives <= 0) {
         // Redirect to QuizSummary when the quiz ends
         this.$router.push({
-          path: "/quiz-summary",
+          path: '/quiz-summary',
           query: {
             userName: this.userName,
             correctAnswers: this.$store.state.score.toString(),
             totalQuestions: this.totalQuestions.toString(),
-            score: this.$store.state.score.toString(),
-          },
+            score: this.$store.state.score.toString()
+          }
         });
         return;
       }
 
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
+        this.questionNumber++;
         this.generateNewQuestion();
         this.submitting = false; // Re-enable submitting for the next question
       }, 2000);
-    },
-  },
-  watch: {
-    // Watch for changes in route to reset the timer
-    $route() {
-      if (this.$route.name === "Quiz") {
-        this.startTimer();
-      }
-    },
-  },
+    }
+  }
 };
 </script>
-
-<style scoped>
-
-</style>
