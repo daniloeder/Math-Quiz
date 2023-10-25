@@ -16,10 +16,16 @@ export default {
       question: {},
       answer: null,
       feedback: '',
-      questionNumber: 1, // Start with the first question
+      questionNumber: 1,
       timeLeft: 10,
-      timerInterval: null, // to store the interval ID
-      timeoutId: null  // to store the timeout ID
+      timerInterval: null,
+      timeoutId: null,
+      difficulty: this.$route.query.difficulty || 'easy', // set difficulty based on route query or default to 'easy'
+      difficultyMapping: {
+        easy: 10,
+        medium: 20,
+        hard: 50
+      }
     };
   },
   created() {
@@ -53,18 +59,53 @@ export default {
         return; // Don't generate another question
       }
 
-      const num1 = Math.floor(Math.random() * 10);
-      const num2 = Math.floor(Math.random() * 10);
-      this.question = {
-        text: `What is ${num1} + ${num2}?`,
-        answer: num1 + num2
-      };
+      const maxNum = this.difficultyMapping[this.difficulty];
+      let num1 = Math.floor(Math.random() * maxNum) + 1;
+      let num2 = Math.floor(Math.random() * maxNum) + 1;
+
+      // Select operation based on question number
+      const operations = ["+", "-", "*", "/"];
+      const operation = operations[(this.questionNumber - 1) % operations.length];
+
+      switch (operation) {
+        case "+":
+          this.question = {
+            text: `What is ${num1} + ${num2}?`,
+            answer: num1 + num2
+          };
+          break;
+        case "-":
+          if (num2 > num1) {
+            [num1, num2] = [num2, num1]; // swap to ensure positive result
+          }
+          this.question = {
+            text: `What is ${num1} - ${num2}?`,
+            answer: num1 - num2
+          };
+          break;
+        case "*":
+          this.question = {
+            text: `What is ${num1} * ${num2}?`,
+            answer: num1 * num2
+          };
+          break;
+        case "/":
+          while (num1 % num2 !== 0) {
+            num2 = Math.floor(Math.random() * maxNum) + 1;
+          }
+          this.question = {
+            text: `What is ${num1} / ${num2}?`,
+            answer: num1 / num2
+          };
+          break;
+      }
+
       this.answer = ""; // Clear the previous answer
       this.startTimer();
     },
     submitAnswer() {
       if (this.timeoutId) {
-        clearTimeout(this.timeoutId); // Clear the previous timeout
+        clearTimeout(this.timeoutId);
       }
 
       if (parseInt(this.answer) === this.question.answer) {
