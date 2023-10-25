@@ -22,6 +22,7 @@ export default {
       feedback: '',
       questionNumber: 1,
       totalQuestions: 0, // Initialize totalQuestions
+      correctAnswers: 0, // Initialize correctAnswers
       timeLeft: 10,
       timerInterval: null,
       timeoutId: null,
@@ -57,9 +58,9 @@ export default {
           path: '/quiz-summary',
           query: {
             userName: this.userName,
-            correctAnswers: this.$store.state.score.toString(),
-            totalQuestions: this.totalQuestions.toString(), // Updated here
-            score: this.$store.state.score.toString()
+            correctAnswers: this.correctAnswers.toString(),
+            totalQuestions: this.totalQuestions.toString(),
+            score: this.correctAnswers.toString() // Updated score
           }
         });
         return;
@@ -79,15 +80,11 @@ export default {
         clearTimeout(this.timeoutId);
       }
 
-      const userAnswer = parseFloat(this.answer);
-      const correctAnswer = this.question.answer;
-
-      // Check if the user's answer is within a tolerance of 0.01 of the correct answer
-      const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.01;
+      const isCorrect = parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2);
 
       if (isCorrect) {
         this.feedback = "Correct!";
-        this.$store.commit('incrementScore');
+        this.correctAnswers++; // Increment correctAnswers on correct submission
       } else {
         this.feedback = "Incorrect.";
         this.lives--;
@@ -102,9 +99,9 @@ export default {
           path: '/quiz-summary',
           query: {
             userName: this.userName,
-            correctAnswers: this.$store.state.score.toString(),
+            correctAnswers: this.correctAnswers.toString(),
             totalQuestions: this.totalQuestions.toString(),
-            score: this.$store.state.score.toString()
+            score: this.correctAnswers.toString() // Updated score
           }
         });
         return;
@@ -114,7 +111,7 @@ export default {
         this.feedback = "";
         this.questionNumber++;
         this.generateNewQuestion();
-        this.submitting = false; // Re-enable submitting for the next question
+        this.submitting = false;
       }, 2000);
     }
   }
