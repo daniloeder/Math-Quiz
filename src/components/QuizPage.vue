@@ -21,6 +21,7 @@ export default {
       answer: null,
       feedback: '',
       questionNumber: 1,
+      totalQuestions: 0, // Initialize totalQuestions
       timeLeft: 10,
       timerInterval: null,
       timeoutId: null,
@@ -57,7 +58,7 @@ export default {
           query: {
             userName: this.userName,
             correctAnswers: this.$store.state.score.toString(),
-            totalQuestions: (this.questionNumber - 1).toString(),
+            totalQuestions: this.totalQuestions.toString(), // Updated here
             score: this.$store.state.score.toString()
           }
         });
@@ -67,15 +68,20 @@ export default {
       this.question = generateQuestion(difficulty);
       this.answer = "";
       this.startTimer();
+      this.totalQuestions++;
     },
     submitAnswer() {
-      if (this.submitting) return; // prevent multiple rapid submits
+      if (this.submitting) return; // Prevent multiple rapid submits
+
       this.submitting = true;
 
       if (this.timeoutId) {
         clearTimeout(this.timeoutId);
       }
-      if (parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2)) {
+
+      const isCorrect = parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2);
+
+      if (isCorrect) {
         this.feedback = "Correct!";
         this.$store.commit('incrementScore');
       } else {
@@ -85,11 +91,25 @@ export default {
           this.feedback += " You've run out of lives!";
         }
       }
+
+      if (this.questionNumber > 10 || this.lives <= 0) {
+        // Redirect to QuizSummary when the quiz ends
+        this.$router.push({
+          path: '/quiz-summary',
+          query: {
+            userName: this.userName,
+            correctAnswers: this.$store.state.score.toString(),
+            totalQuestions: this.totalQuestions.toString(),
+            score: this.$store.state.score.toString()
+          }
+        });
+        return;
+      }
+
       this.timeoutId = setTimeout(() => {
         this.feedback = "";
         this.questionNumber++;
         this.generateNewQuestion();
-
         this.submitting = false;
       }, 2000);
     }
