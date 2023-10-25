@@ -1,15 +1,26 @@
 <template>
   <div>
     <h2>Welcome, {{ userName }}!</h2>
-    <h2>Question {{ questionNumber }} of 10: {{ question.text }}</h2>
-    <div v-if="timeLeft > 0">Time left: {{ timeLeft }}s</div>
-    <div>Lives: {{ lives }}</div>
-    <input v-model="answer" @keyup.enter="submitAnswer" type="number" />
-    <button @click="submitAnswer">Submit</button>
+    <div v-if="lives > 0 && questionNumber <= 10 && timeLeft > 0">
+      <h2>Question {{ questionNumber }} of 10: {{ question.text }}</h2>
+      <div>Time left: {{ timeLeft }}s</div>
+      <div>Lives: {{ lives }}</div>
+      <input v-model="answer" @keyup.enter="submitAnswer" type="number" />
+      <button @click="submitAnswer">Submit</button>
+    </div>
     <div v-if="feedback">{{ feedback }}</div>
-    <router-link to="/">Back to Home</router-link>
+    <div v-if="showCorrectAnswer">{{ showCorrectAnswer }}</div>
+    <div v-if="questionNumber > 10 || lives <= 0">
+      <p>Test finished.</p>
+      <p>See results in <router-link :to="{ path: '/quiz-summary', query: { userName, correctAnswers, totalQuestions, score } }">Summary</router-link></p>
+      <button @click="goToHighScores">High Scores</button>
+      <button @click="goToSummary">Summary</button>
+      <button @click="goToHome">Home</button>
+    </div>
   </div>
 </template>
+
+
 
 <script>
 import generateQuestion from "@/utils/questionGenerator";
@@ -20,15 +31,17 @@ export default {
       question: {},
       answer: null,
       feedback: '',
+      correctAnswer: null,
       questionNumber: 1,
-      totalQuestions: 0, // Initialize totalQuestions
-      correctAnswers: 0, // Initialize correctAnswers
+      totalQuestions: 0,
+      correctAnswers: 0,
       timeLeft: 10,
       timerInterval: null,
       timeoutId: null,
       userName: '',
       lives: 3,
-      submitting: false
+      submitting: false,
+      showCorrectAnswer: '',
     };
   },
   created() {
@@ -53,67 +66,68 @@ export default {
     },
     generateNewQuestion() {
       if (this.questionNumber > 10 || this.lives <= 0) {
-        // Redirecting to the QuizSummary page with necessary data
-        this.$router.push({
-          path: '/quiz-summary',
-          query: {
-            userName: this.userName,
-            correctAnswers: this.correctAnswers.toString(),
-            totalQuestions: this.totalQuestions.toString(),
-            score: this.correctAnswers.toString() // Updated score
-          }
-        });
+        this.addToHighScores(); // Add score when the quiz ends
         return;
       }
       const difficulty = this.$route.query.difficulty || 'easy';
-      this.question = generateQuestion(difficulty);
-      this.answer = "";
+      const newQuestion = generateQuestion(difficulty);
+      this.question = newQuestion;
+      this.answer = '';
+      this.correctAnswer = newQuestion.answer;
       this.startTimer();
       this.totalQuestions++;
     },
     submitAnswer() {
-      if (this.submitting) return; // Prevent multiple rapid submits
+      if (this.submitting || this.questionNumber > 10 || this.lives <= 0) return;
       this.submitting = true;
 
       if (this.timeoutId) {
         clearTimeout(this.timeoutId);
       }
 
-      const isCorrect = parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2);
+      const isCorrect = parseFloat(this.answer).toFixed(2) === this.correctAnswer.toFixed(2);
 
       if (isCorrect) {
         this.feedback = "Correct!";
-        this.correctAnswers++; // Increment correctAnswers on correct submission
+        this.correctAnswers++;
       } else {
         this.feedback = "Incorrect.";
         this.lives--;
         if (this.lives <= 0) {
           this.feedback += " You've run out of lives!";
         }
+        this.showCorrectAnswer = `The answer is ${this.correctAnswer % 1 === 0 ? this.correctAnswer.toFixed(0) : this.correctAnswer.toFixed(1)}.`;
       }
 
-      // Check if the quiz has ended here
-      if (this.questionNumber > 10 || this.lives <= 0) {
-        // Correctly pass both userName and correctAnswers to the mutation
-        this.$store.commit('addHighScore', { userName: this.userName, score: this.correctAnswers });
-        // Redirect to QuizSummary when the quiz ends
-        this.$router.push({
-          path: '/quiz-summary',
-          query: {
-            userName: this.userName,
-            correctAnswers: this.correctAnswers.toString(),
-            totalQuestions: this.totalQuestions.toString(),
-            score: this.correctAnswers.toString() // Updated score
-          }
-        });
-        return;
-      }
       this.timeoutId = setTimeout(() => {
-        this.feedback = "";
+        this.feedback = '';
+        this.showCorrectAnswer = '';
         this.questionNumber++;
         this.generateNewQuestion();
         this.submitting = false;
       }, 2000);
+    },
+    addToHighScores() {
+      if (this.correctAnswers > 0) {
+        this.$store.commit('addHighScore', {
+          userName: this.userName,
+          score: this.correctAnswers
+        });
+      }
+    },
+    goToSummary() {
+      this.$router.push({
+        path: '/quiz-summary',
+        query: {
+          userName: this.userName,
+          correctAnswers: this.correctAnswers.toString(),
+          totalQuestions: this.totalQuestions.toString(),
+          score: this.correctAnswers.toString()
+        }
+      });
+    },
+    goToHighScores() {
+      this.$router.push('/scores');
     }
   }
 };
