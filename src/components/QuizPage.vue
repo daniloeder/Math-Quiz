@@ -64,7 +64,7 @@ export default {
         clearTimeout(this.timeoutId);
       }
 
-      if (parseInt(this.answer) === this.question.answer) {
+      if (parseFloat(this.answer).toFixed(2) === this.question.answer.toFixed(2)) {
         this.feedback = "Correct!";
         this.$store.commit('incrementScore');
       } else {
