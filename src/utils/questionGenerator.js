@@ -29,11 +29,14 @@ export default function generateQuestion(difficulty) {
       text = `What is ${num1} x ${num2}?`;
       answer = num1 * num2;
       break;
+
     case '/':
       num2 = num2 || 1; // Avoid division by zero
+      num1 = num1 * num2; // Ensure num1 is a multiple of num2
       text = `What is ${num1} / ${num2}?`;
       answer = num1 / num2;
       break;
+
   }
 
   return { text, answer };
