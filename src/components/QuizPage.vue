@@ -225,6 +225,9 @@ export default {
     },
     goToHighScores() {
       this.$router.push('/scores');
+    },
+    goToHome() {
+      this.$router.push('/');
     }
   }
 };
