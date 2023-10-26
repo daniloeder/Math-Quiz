@@ -72,22 +72,18 @@
 }
 </style>
 
-<script>
-export default {
-  data() {
-    return {
-      difficulty: 'easy',
-      userName: ''
-    };
-  },
-  methods: {
-    startQuiz() {
-      this.$router.push({
-        path: '/quiz',
-        query: { difficulty: this.difficulty, userName: this.userName }
-      });
-    }
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-  }
+const router = useRouter();
+const userName = ref('');
+const difficulty = ref('easy');
+
+const startQuiz = () => {
+  router.push({
+    path: '/quiz',
+    query: { difficulty: difficulty.value, userName: userName.value }
+  });
 };
 </script>

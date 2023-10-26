@@ -85,18 +85,25 @@
 .animate-wiggle:hover {
     animation: wiggle 0.5s;
 }
+
 </style>
 
-<script>
-export default {
-    props: ['userName', 'correctAnswers', 'totalQuestions', 'score'],
-    methods: {
-        addToHighScores() {
-            this.$store.commit('addHighScore', {
-                userName: this.userName,
-                score: this.score,
-            });
-        },
-    },
-};
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+
+const userName = ref('');
+const correctAnswers = ref(0);
+const totalQuestions = ref(0);
+const score = ref(0);
+
+onMounted(() => {
+  userName.value = route.query.userName || 'Anonymous';
+  correctAnswers.value = Number(route.query.correctAnswers) || 0;
+  totalQuestions.value = Number(route.query.totalQuestions) || 0;
+  score.value = Number(route.query.score) || 0;
+});
+
 </script>

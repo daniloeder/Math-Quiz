@@ -117,118 +117,124 @@
 }
 </style>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import generateQuestion from "@/utils/questionGenerator";
 
-export default {
-  data() {
-    return {
-      question: {},
-      answer: null,
-      feedback: '',
-      correctAnswer: null,
-      questionNumber: 1,
-      totalQuestions: 0,
-      correctAnswers: 0,
-      timeLeft: 10,
-      timerInterval: null,
-      timeoutId: null,
-      userName: '',
-      lives: 3,
-      submitting: false,
-      showCorrectAnswer: '',
-    };
-  },
-  created() {
-    this.userName = this.$route.query.userName || "Anonymous";
-    this.startTimer();
-    this.generateNewQuestion();
-  },
-  methods: {
-    startTimer() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-      }
-      this.timeLeft = 10;
-      this.timerInterval = setInterval(() => {
-        if (this.timeLeft > 0) {
-          this.timeLeft--;
-        } else {
-          clearInterval(this.timerInterval);
-          this.submitAnswer();
-        }
-      }, 1000);
-    },
-    generateNewQuestion() {
-      if (this.questionNumber > 10 || this.lives <= 0) {
-        this.addToHighScores();
-        return;
-      }
-      const difficulty = this.$route.query.difficulty || 'easy';
-      const newQuestion = generateQuestion(difficulty);
-      this.question = newQuestion;
-      this.answer = '';
-      this.correctAnswer = newQuestion.answer;
-      this.startTimer();
-      this.totalQuestions++;
-    },
-    submitAnswer() {
-      if (this.submitting || this.questionNumber > 10 || this.lives <= 0) return;
-      this.submitting = true;
+// Reactive Variables
+const question = ref({});
+const answer = ref(null);
+const feedback = ref('');
+const feedbackColor = ref('');  // Define feedbackColor
+const correctAnswer = ref(null);
+const questionNumber = ref(1);
+const totalQuestions = ref(0);
+const correctAnswers = ref(0);
+const timeLeft = ref(10);
+const timerInterval = ref(null);
+const timeoutId = ref(null);
+const userName = ref('');
+const lives = ref(3);
+const submitting = ref(false);
+const showCorrectAnswer = ref('');
+const route = useRoute();
+const router = useRouter();
+const store = useStore();
 
-      if (this.timeoutId) {
-        clearTimeout(this.timeoutId);
-      }
-
-      const isCorrect = parseFloat(this.answer).toFixed(2) === this.correctAnswer.toFixed(2);
-
-      if (isCorrect) {
-        this.feedbackColor = "green";
-        this.feedback = "Correct!";
-        this.correctAnswers++;
-      } else {
-        this.feedbackColor = "red";
-        this.feedback = "Incorrect.";
-        this.lives--;
-        if (this.lives <= 0) {
-          this.feedback += " You've run out of lives!";
-        }
-        this.showCorrectAnswer = `The answer is ${this.correctAnswer % 1 === 0 ? this.correctAnswer.toFixed(0) : this.correctAnswer.toFixed(1)}.`;
-      }
-
-      this.timeoutId = setTimeout(() => {
-        this.feedback = '';
-        this.showCorrectAnswer = '';
-        this.questionNumber++;
-        this.generateNewQuestion();
-        this.submitting = false;
-      }, 2000);
-    },
-    addToHighScores() {
-      if (this.correctAnswers > 0) {
-        this.$store.commit('addHighScore', {
-          userName: this.userName,
-          score: this.correctAnswers
-        });
-      }
-    },
-    goToSummary() {
-      this.$router.push({
-        path: '/quiz-summary',
-        query: {
-          userName: this.userName,
-          correctAnswers: this.correctAnswers.toString(),
-          totalQuestions: this.totalQuestions.toString(),
-          score: this.correctAnswers.toString()
-        }
-      });
-    },
-    goToHighScores() {
-      this.$router.push('/scores');
-    },
-    goToHome() {
-      this.$router.push('/');
+// Functions
+const startTimer = () => {
+  clearInterval(timerInterval.value);
+  timeLeft.value = 10;
+  timerInterval.value = setInterval(() => {
+    if (timeLeft.value > 0) {
+      timeLeft.value--;
+    } else {
+      clearInterval(timerInterval.value);
+      submitAnswer();
     }
+  }, 1000);
+};
+
+const generateNewQuestion = () => {
+  if (questionNumber.value > 10 || lives.value <= 0) {
+    addToHighScores();
+    return;
+  }
+  const difficulty = route.query.difficulty || 'easy';
+  const newQuestion = generateQuestion(difficulty);
+  question.value = newQuestion;
+  answer.value = '';
+  correctAnswer.value = newQuestion.answer;
+  startTimer();
+  totalQuestions.value++;
+};
+
+const submitAnswer = () => {
+  if (submitting.value || questionNumber.value > 10 || lives.value <= 0) return;
+  submitting.value = true;
+
+  clearTimeout(timeoutId.value);
+
+  const isCorrect = parseFloat(answer.value).toFixed(2) === correctAnswer.value.toFixed(2);
+
+  feedback.value = isCorrect ? 'Correct!' : 'Incorrect.';
+  feedbackColor.value = isCorrect ? 'green' : 'red';
+
+  if (isCorrect) {
+    correctAnswers.value++;
+  } else {
+    lives.value--;
+    if (lives.value <= 0) {
+      feedback.value += " You've run out of lives!";
+    }
+    showCorrectAnswer.value = `The answer is ${correctAnswer.value % 1 === 0 ? correctAnswer.value.toFixed(0) : correctAnswer.value.toFixed(1)}.`;
+  }
+
+  timeoutId.value = setTimeout(() => {
+    feedback.value = '';
+    showCorrectAnswer.value = '';
+    questionNumber.value++;
+    generateNewQuestion();
+    submitting.value = false;
+  }, 2000);
+};
+
+const addToHighScores = () => {
+  if (correctAnswers.value > 0) {
+    store.commit('addHighScore', {
+      userName: userName.value,
+      score: correctAnswers.value
+    });
   }
 };
+
+const goToSummary = () => {
+  router.push({
+    path: '/quiz-summary',
+    query: {
+      userName: userName.value,
+      correctAnswers: correctAnswers.value.toString(),
+      totalQuestions: totalQuestions.value.toString(),
+      score: correctAnswers.value.toString()
+    }
+  });
+};
+
+const goToHighScores = () => {
+  router.push('/scores');
+};
+
+const goToHome = () => {
+  router.push('/');
+};
+
+// Lifecycle Hook
+onMounted(() => {
+  userName.value = route.query.userName || "Anonymous";
+  startTimer();
+  generateNewQuestion();
+});
+
 </script>

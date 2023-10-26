@@ -78,16 +78,12 @@
 }
 </style>
 
-<script>
-import { mapState } from 'vuex';
+<script setup>
+import { computed } from 'vue';
+import { useStore } from 'vuex';
 
-export default {
-  computed: {
-    ...mapState(['scores']),
-    highScores() {
-      // Return the top 10 scores or all scores if less than 10
-      return this.scores.slice(0, 10);
-    },
-  },
-};
+const store = useStore();
+const scores = computed(() => store.state.scores);
+const highScores = computed(() => scores.value.slice(0, 10));
+
 </script>
